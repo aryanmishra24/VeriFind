@@ -11,6 +11,7 @@ from nltk.corpus import stopwords
 import nltk
 import os
 import streamlit as st
+import sys
 
 # Download NLTK data if not already present
 try:
@@ -23,24 +24,59 @@ def load_model_resources():
     """Load model resources only once and cache them"""
     try:
         # Get the absolute path to the model directory
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        model_dir = os.path.join(base_dir, 'model')
+        current_file = os.path.abspath(__file__)
+        print(f"Current file path: {current_file}")
         
-        model = joblib.load(os.path.join(model_dir, 'fake_news_model.pkl'))
-        vectorizer = joblib.load(os.path.join(model_dir, 'tfidf_vectorizer.pkl'))
-        model_info = joblib.load(os.path.join(model_dir, 'model_info.pkl'))
-        print("Model loaded successfully!")
+        base_dir = os.path.dirname(os.path.dirname(current_file))
+        print(f"Base directory: {base_dir}")
+        
+        model_dir = os.path.join(base_dir, 'model')
+        print(f"Model directory: {model_dir}")
+        
+        # Check if model files exist
+        model_path = os.path.join(model_dir, 'fake_news_model.pkl')
+        vectorizer_path = os.path.join(model_dir, 'tfidf_vectorizer.pkl')
+        info_path = os.path.join(model_dir, 'model_info.pkl')
+        
+        print(f"Checking model files:")
+        print(f"Model file exists: {os.path.exists(model_path)}")
+        print(f"Vectorizer file exists: {os.path.exists(vectorizer_path)}")
+        print(f"Info file exists: {os.path.exists(info_path)}")
+        
+        if not all([os.path.exists(model_path), os.path.exists(vectorizer_path), os.path.exists(info_path)]):
+            raise FileNotFoundError("One or more model files are missing")
+        
+        # Load the files
+        print("Loading model files...")
+        model = joblib.load(model_path)
+        print("Model loaded")
+        
+        vectorizer = joblib.load(vectorizer_path)
+        print("Vectorizer loaded")
+        
+        model_info = joblib.load(info_path)
+        print("Model info loaded")
+        
+        print("All model resources loaded successfully!")
         return model, vectorizer, model_info
-    except FileNotFoundError as e:
-        print(f"Error loading model: {e}")
-        print("Please ensure the model files exist in the 'model' directory")
-        print("Run the training notebook first to generate the model files")
+        
+    except Exception as e:
+        print(f"Error loading model resources: {str(e)}")
+        print(f"Python path: {sys.path}")
+        print(f"Current working directory: {os.getcwd()}")
+        print(f"Directory contents of {model_dir}:")
+        try:
+            print(os.listdir(model_dir))
+        except Exception as dir_error:
+            print(f"Could not list directory contents: {str(dir_error)}")
         return None, None, None
 
 class FakeNewsChecker:
     def __init__(self):
         """Initialize the checker with pre-trained model and vectorizer"""
         self.model, self.vectorizer, self.model_info = load_model_resources()
+        if any(x is None for x in [self.model, self.vectorizer, self.model_info]):
+            st.error("Failed to load model resources. Please check the console for details.")
     
     def preprocess_text(self, text):
         """

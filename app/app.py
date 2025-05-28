@@ -7,11 +7,16 @@ import streamlit as st
 import os
 import sys
 from datetime import datetime
+import logging
 
 # Add the app directory to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from utils import FakeNewsChecker, NewsAPIClient, FactCheckAPI, get_combined_verdict
+
+# Add debug logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Page configuration
 st.set_page_config(
@@ -105,6 +110,8 @@ def initialize_session_state():
         st.session_state.news_client = None
     if 'fact_check_client' not in st.session_state:
         st.session_state.fact_check_client = None
+    if 'model_loaded' not in st.session_state:
+        st.session_state.model_loaded = False
 
 def setup_api_clients():
     """Setup API clients with user-provided keys"""
@@ -303,9 +310,20 @@ def main():
     news_api_key, fact_check_api_key = setup_api_clients()
     
     # Initialize ML model
-    if st.session_state.checker is None:
+    if not st.session_state.model_loaded:
         with st.spinner("Loading ML model..."):
-            st.session_state.checker = FakeNewsChecker()
+            try:
+                logger.info("Attempting to initialize FakeNewsChecker...")
+                st.session_state.checker = FakeNewsChecker()
+                if st.session_state.checker.model is None:
+                    st.error("Failed to load ML model. Please check the console for details.")
+                    logger.error("Model initialization failed - model is None")
+                else:
+                    st.session_state.model_loaded = True
+                    logger.info("Model loaded successfully")
+            except Exception as e:
+                st.error(f"Error loading ML model: {str(e)}")
+                logger.error(f"Model initialization error: {str(e)}", exc_info=True)
     
     # Display model information
     display_model_info()
