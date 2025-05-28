@@ -182,13 +182,14 @@ if __name__ == "__main__":
 
     # --- 8. Initialize TF-IDF Vectorizer ---
     vectorizer = TfidfVectorizer(
-        max_features=5000,  # Reduced from 10000 to 5000 to decrease model size
-        ngram_range=(1, 2),  # Keep unigrams and bigrams
-        min_df=3,           # Increased from 2 to 3 to remove more rare terms
-        max_df=0.90,        # Reduced from 0.95 to 0.90 to remove more common terms
+        max_features=2000,  # Further reduced from 5000 to 2000
+        ngram_range=(1, 1),  # Only use unigrams to reduce size
+        min_df=5,           # Increased from 3 to 5 to remove more rare terms
+        max_df=0.85,        # Further reduced from 0.90 to 0.85
         strip_accents='unicode',
         lowercase=True,
-        dtype=np.float32    # Use float32 instead of float64 to reduce memory usage
+        dtype=np.float32,   # Use float32 for memory efficiency
+        sublinear_tf=True   # Apply sublinear scaling to reduce feature weights
     )
     
     # Fit and transform training data, then transform test data
@@ -202,20 +203,14 @@ if __name__ == "__main__":
     # --- 9. Train and evaluate models ---
     print("\n--- Training and evaluating models ---")
     
-    # Initialize models
+    # Initialize models - using only lighter models
     models = {
         'Logistic Regression': LogisticRegression(
             C=1.0,
             max_iter=1000,
             n_jobs=-1,
-            random_state=42
-        ),
-        'Random Forest': RandomForestClassifier(
-            n_estimators=100,  # Reduced from default to save memory
-            max_depth=10,      # Added max_depth to prevent overfitting
-            min_samples_split=5,
-            n_jobs=-1,
-            random_state=42
+            random_state=42,
+            solver='liblinear'  # More memory efficient solver
         ),
         'Multinomial Naive Bayes': MultinomialNB()
     }
@@ -248,14 +243,14 @@ if __name__ == "__main__":
     # --- 10. Save the best model and vectorizer ---
     print("\n--- Saving model and vectorizer ---")
     
-    # Save the vectorizer
+    # Save the vectorizer with maximum compression
     vectorizer_path = os.path.join(model_dir, 'tfidf_vectorizer.pkl')
-    joblib.dump(vectorizer, vectorizer_path, compress=3)  # Added compression
+    joblib.dump(vectorizer, vectorizer_path, compress=9)  # Maximum compression
     print(f"Vectorizer saved to {vectorizer_path}")
     
-    # Save the best model
+    # Save the best model with maximum compression
     model_path = os.path.join(model_dir, 'fake_news_model.pkl')
-    joblib.dump(best_model, model_path, compress=3)  # Added compression
+    joblib.dump(best_model, model_path, compress=9)  # Maximum compression
     print(f"Model saved to {model_path}")
     
     # Save model information
