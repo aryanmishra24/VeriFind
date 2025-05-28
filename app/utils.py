@@ -10,6 +10,7 @@ import pandas as pd
 from nltk.corpus import stopwords
 import nltk
 import os
+import streamlit as st
 
 # Download NLTK data if not already present
 try:
@@ -17,29 +18,29 @@ try:
 except LookupError:
     nltk.download('stopwords')
 
+@st.cache_resource
+def load_model_resources():
+    """Load model resources only once and cache them"""
+    try:
+        # Get the absolute path to the model directory
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        model_dir = os.path.join(base_dir, 'model')
+        
+        model = joblib.load(os.path.join(model_dir, 'fake_news_model.pkl'))
+        vectorizer = joblib.load(os.path.join(model_dir, 'tfidf_vectorizer.pkl'))
+        model_info = joblib.load(os.path.join(model_dir, 'model_info.pkl'))
+        print("Model loaded successfully!")
+        return model, vectorizer, model_info
+    except FileNotFoundError as e:
+        print(f"Error loading model: {e}")
+        print("Please ensure the model files exist in the 'model' directory")
+        print("Run the training notebook first to generate the model files")
+        return None, None, None
+
 class FakeNewsChecker:
     def __init__(self):
         """Initialize the checker with pre-trained model and vectorizer"""
-        self.model = None
-        self.vectorizer = None
-        self.model_info = None
-        self.load_model()
-    
-    def load_model(self):
-        """Load the pre-trained model and vectorizer"""
-        try:
-            # Get the absolute path to the model directory
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            model_dir = os.path.join(base_dir, 'model')
-            
-            self.model = joblib.load(os.path.join(model_dir, 'fake_news_model.pkl'))
-            self.vectorizer = joblib.load(os.path.join(model_dir, 'tfidf_vectorizer.pkl'))
-            self.model_info = joblib.load(os.path.join(model_dir, 'model_info.pkl'))
-            print("Model loaded successfully!")
-        except FileNotFoundError as e:
-            print(f"Error loading model: {e}")
-            print("Please ensure the model files exist in the 'model' directory")
-            print("Run the training notebook first to generate the model files")
+        self.model, self.vectorizer, self.model_info = load_model_resources()
     
     def preprocess_text(self, text):
         """
