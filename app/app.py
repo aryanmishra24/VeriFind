@@ -144,15 +144,34 @@ def display_model_info():
     """Display information about the loaded model"""
     if st.session_state.checker and st.session_state.checker.model_info:
         info = st.session_state.checker.model_info
-        st.sidebar.markdown("### 🤖 Model Information")
-        st.sidebar.markdown(f"""
-        <div class="sidebar-info">
-        <strong>Algorithm:</strong> {info.get('model_name', 'Unknown')}<br>
-        <strong>Accuracy:</strong> {info.get('accuracy', 0):.2%}<br>
-        <strong>Features:</strong> {info.get('features_count', 0):,}<br>
-        <strong>Training Samples:</strong> {info.get('training_samples', 0):,}
+        st.sidebar.markdown("""
+        <div style="background-color: #1f77b4; padding: 20px; border-radius: 10px; margin: 20px 0; color: white;">
+            <h2 style="color: white; margin-bottom: 15px; font-size: 1.5em;">🤖 Model Information</h2>
+            <div style="background-color: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+                <div style="margin-bottom: 15px;">
+                    <h3 style="color: #ffd700; margin: 0 0 5px 0; font-size: 1.1em;">Algorithm</h3>
+                    <p style="font-size: 1.2em; margin: 0; font-weight: bold;">{}</p>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <h3 style="color: #ffd700; margin: 0 0 5px 0; font-size: 1.1em;">Accuracy</h3>
+                    <p style="font-size: 1.2em; margin: 0; font-weight: bold;">{:.2%}</p>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <h3 style="color: #ffd700; margin: 0 0 5px 0; font-size: 1.1em;">Features</h3>
+                    <p style="font-size: 1.2em; margin: 0; font-weight: bold;">{:,}</p>
+                </div>
+                <div>
+                    <h3 style="color: #ffd700; margin: 0 0 5px 0; font-size: 1.1em;">Training Samples</h3>
+                    <p style="font-size: 1.2em; margin: 0; font-weight: bold;">{:,}</p>
+                </div>
+            </div>
         </div>
-        """, unsafe_allow_html=True)
+        """.format(
+            info.get('model_name', 'Unknown'),
+            info.get('accuracy', 0),
+            info.get('features_count', 0),
+            info.get('training_samples', 0)
+        ), unsafe_allow_html=True)
 
 def display_ml_prediction(prediction_result):
     """Display ML model prediction results"""
@@ -325,7 +344,7 @@ def main():
                 st.error(f"Error loading ML model: {str(e)}")
                 logger.error(f"Model initialization error: {str(e)}", exc_info=True)
     
-    # Display model information
+    # Display model information in main area
     display_model_info()
     
     # Sidebar instructions
